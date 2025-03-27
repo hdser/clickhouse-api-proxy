@@ -6,9 +6,9 @@
         "maxDuration": 10
       }
     },
-    "routes": [
-      { "src": "/api/metrics", "dest": "/api/metrics.js" },
-      { "src": "/api/metrics/(.*)", "dest": "/api/metrics.js" }
+    "rewrites": [
+      { "source": "/api/metrics", "destination": "/api/metrics.js" },
+      { "source": "/api/metrics/(.*)", "destination": "/api/metrics.js" }
     ],
     "headers": [
       {

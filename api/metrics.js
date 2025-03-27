@@ -69,8 +69,13 @@ async function fetchMetricData(metricId, from, to) {
   const rawData = await executeClickHouseQuery(query);
   
   // Transform the data into a consistent format
-  return rawData.map(row => ({
-    date: row.date,
+  // Handle different response formats properly
+  const dataArray = Array.isArray(rawData) ? rawData : 
+                   (rawData && rawData.data && Array.isArray(rawData.data)) ? rawData.data :
+                   (typeof rawData === 'object' && rawData !== null) ? [rawData] : [];
+                   
+  return dataArray.map(row => ({
+    date: row.date || new Date().toISOString().split('T')[0],
     value: parseFloat(row.value || 0)
   }));
 }
@@ -112,33 +117,63 @@ async function fetchAllMetricsData(from, to) {
  */
 async function executeClickHouseQuery(query) {
   try {
-    // Check if we're in development mode
-    if (process.env.NODE_ENV === 'development' && process.env.USE_MOCK_DATA === 'true') {
+    // Check if we're in development mode or USE_MOCK_DATA is enabled
+    if (process.env.USE_MOCK_DATA === 'true' || !process.env.CLICKHOUSE_HOST) {
       console.log('Using mock data for query:', query);
       return generateMockData(query);
     }
     
     // Verify ClickHouse connection details
-    if (!process.env.CLICKHOUSE_HOST || !process.env.CLICKHOUSE_USER || !process.env.CLICKHOUSE_PASSWORD) {
+    if (!process.env.CLICKHOUSE_HOST) {
       throw new Error('Missing ClickHouse connection details');
     }
     
+    // Determine the proper URL format and connection details
+    const clickhouseHost = process.env.CLICKHOUSE_HOST;
+    const clickhousePort = process.env.CLICKHOUSE_PORT || '8443';
+    const clickhouseUser = process.env.CLICKHOUSE_USER || 'default';
+    const clickhousePassword = process.env.CLICKHOUSE_PASSWORD || '';
+    const clickhouseDatabase = process.env.CLICKHOUSE_DATABASE || 'default';
+    
+    // Construct URL if it doesn't include protocol
+    const url = clickhouseHost.startsWith('http') 
+      ? clickhouseHost 
+      : `https://${clickhouseHost}:${clickhousePort}`;
+    
     // Execute the actual query
+    console.log(`Executing ClickHouse query to ${url}`);
     const response = await axios({
       method: 'post',
-      url: process.env.CLICKHOUSE_HOST,
+      url,
       auth: {
-        username: process.env.CLICKHOUSE_USER,
-        password: process.env.CLICKHOUSE_PASSWORD
+        username: clickhouseUser,
+        password: clickhousePassword
       },
       params: {
         query,
+        database: clickhouseDatabase,
         default_format: 'JSONEachRow'
       },
       timeout: 8000 // 8 second timeout
     });
     
-    return response.data;
+    console.log('ClickHouse response:', JSON.stringify(response.data).substring(0, 200) + '...');
+    
+    // Handle different response formats
+    if (Array.isArray(response.data)) {
+      return response.data;
+    } else if (typeof response.data === 'object' && response.data !== null) {
+      // If it's a single object or has data property
+      if (response.data.data && Array.isArray(response.data.data)) {
+        return response.data.data;
+      } else {
+        // Convert to array if it's a single object
+        return [response.data];
+      }
+    }
+    
+    // Return empty array if no valid data
+    return [];
   } catch (error) {
     // Handle ClickHouse-specific errors
     if (error.response && error.response.data) {

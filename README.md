@@ -82,9 +82,11 @@ Fetches data for a specific metric.
 2. Install dependencies: `npm install`
 3. Create a `.env` file with the following variables:
    ```
-   CLICKHOUSE_HOST=https://your-instance.clickhouse.cloud
+   CLICKHOUSE_HOST=your-instance.clickhouse.cloud
+   CLICKHOUSE_PORT=8443
    CLICKHOUSE_USER=default
    CLICKHOUSE_PASSWORD=your_password
+   CLICKHOUSE_DATABASE=default
    API_KEY=your_secret_api_key
    USE_MOCK_DATA=true
    ```
@@ -104,9 +106,11 @@ Fetches data for a specific metric.
 
 ### Environment Variables
 
-- `CLICKHOUSE_HOST`: URL of your ClickHouse Cloud instance
-- `CLICKHOUSE_USER`: ClickHouse username
+- `CLICKHOUSE_HOST`: Hostname or URL of your ClickHouse Cloud instance (e.g., "your-instance.clickhouse.cloud")
+- `CLICKHOUSE_PORT`: Port number for the ClickHouse connection (default: "8443")
+- `CLICKHOUSE_USER`: ClickHouse username (default: "default")
 - `CLICKHOUSE_PASSWORD`: ClickHouse password
+- `CLICKHOUSE_DATABASE`: ClickHouse database name (default: "default")
 - `API_KEY`: Secret key for API authentication
 - `USE_MOCK_DATA`: Set to "true" to use mock data instead of querying ClickHouse (development only)
 
