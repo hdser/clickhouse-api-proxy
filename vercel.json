@@ -8,11 +8,13 @@
     },
     "rewrites": [
       { "source": "/api/metrics", "destination": "/api/metrics.js" },
-      { "source": "/api/metrics/(.*)", "destination": "/api/metrics.js" }
+      { "source": "/api/metrics/(.*)", "destination": "/api/metrics.js" },
+      { "source": "/metrics", "destination": "/api/metrics.js" },
+      { "source": "/metrics/(.*)", "destination": "/api/metrics.js" }
     ],
     "headers": [
       {
-        "source": "/api/(.*)",
+        "source": "/(.*)",
         "headers": [
           { "key": "Access-Control-Allow-Credentials", "value": "true" },
           { "key": "Access-Control-Allow-Origin", "value": "*" },
